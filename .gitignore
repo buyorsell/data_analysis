@@ -130,3 +130,7 @@ dmypy.json
 
 .idea/
 .vscode/
+
+#mine
+postresspassword_buyorsell.txt
+few_imgs
