@@ -7,6 +7,8 @@ import numpy as np
 from gensim.models import LdaMulticore
 from gensim.corpora.dictionary import Dictionary
 import json
+from sklearn.metrics.pairwise import cosine_similarity
+from gensim.models import KeyedVectors
 
 
 class PrepareNew:
@@ -76,7 +78,45 @@ def write_tickers(new_item: AllNews) -> AllNews:
     return recommendations
 
 
+def text2vec(tokens: List[str], embeddings: KeyedVectors) -> np.ndarray:
+    relevant = 0
+    words_vecs = np.zeros((embeddings.vector_size,))
+    for word in tokens:
+        if word in embeddings:
+            words_vecs += embeddings.word_vec(word, True)
+            relevant += 1
+
+    if relevant:
+        words_vecs /= relevant
+    return words_vecs
+
+
+def extract_keywords(tokens: List[str],
+                     embeddings: KeyedVectors,
+                     top_n: int = 5,
+                     diversity: float = 0.5,
+                     nr_candidates: int = 20) -> str:
+    candidates = []
+    doc_embedding = text2vec(tokens, embeddings).reshape(1, -1)
+    candidate_embeddings = []
+    for candidate in tokens:
+        if candidate in embeddings:
+            candidates.append(candidate)
+            candidate_embeddings.append(embeddings[candidate])
+
+    if len(candidates) == 0:
+        return tokens
+
+    # Calculate distances and extract keywords
+    distances = cosine_similarity(doc_embedding, candidate_embeddings)
+    keywords = [candidates[index] for index in distances.argsort()[0][-top_n:]][::-1]
+
+    return ', '.join(set(keywords))
+
+
 def modify_item(item: AllNews) -> AllNews:
+    embeddings = KeyedVectors.load('word_vectors_kommersant_16clust.kv')  # FILEPATH
     item.tokens = PrepareNew().newstext2token(item.text)
     item.recommendations = write_tickers(item)
+    item.highlights = extract_keywords(item.tokens, embeddings)
     return item
