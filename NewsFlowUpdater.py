@@ -56,12 +56,12 @@ class Recommendation(Base):
 
 
 class NewsFlow():
-    def __init__(self, model_path = "../LDA_model_BoS", dict_path = "../LDA_dict_BoS"):
+    def __init__(self, model_path = "../LDA_model_BoS", dict_path = "../LDA_dict_BoS"):     #FILEPATH
         self.lda_model = LdaMulticore.load(model_path)
         self.dictionary = Dictionary.load(dict_path)
     def write_last_news(self, df: pd.DataFrame):
         df.index = df.id
-        with open('../../tickers.json') as f:
+        with open('../../tickers.json') as f:     #FILEPATH
             ticker_dict = list(json.load(f).values())
         for ticker in ticker_dict:
             result_df = self.get_ticker_df(ticker, df)
@@ -125,7 +125,7 @@ class NewsFlow():
             sorted_ids.append(s_ids[:5])
         new_df['top5'] = sorted_ids
 
-        filename = "../TickerModels/" + ticker + ".sav"
+        filename = "../TickerModels/" + ticker + ".sav"     #FILEPATH
         model = pickle.load(open(filename, 'rb'))
         coef = model.coef_[0]
 
